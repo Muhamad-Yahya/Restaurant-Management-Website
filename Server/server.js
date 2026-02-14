@@ -14,14 +14,25 @@ dotenv.config();
 connectDB();
 
 const app = express();
-// Whitelisted domains (frontend URLs)
+const allowedOrigins = [
+  "https://restaurant-management-website-4iih.vercel.app",
+  "http://localhost:5173", // optional dev
+];
+
 app.use(
   cors({
-    origin: "*", // ⚠️ allows all domains
+    origin: function (origin, callback) {
+      // allow requests with no origin (like curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
   })
 );
-
 app.use(express.json());
 
 
