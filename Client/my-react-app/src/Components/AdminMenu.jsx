@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-const API = "http://localhost:3000/api/admin/menu";
+import { API_BASE } from "../config";
 const BRANCHES = ["Jade Café", "ChinaTown", "Virasat"];
 
 const AdminMenu = () => {
@@ -20,7 +19,7 @@ const AdminMenu = () => {
 
   const fetchMenu = async () => {
     try {
-      const res = await axios.get(API);
+      const res = await axios.get(`${API_BASE}/menu`);
       setMenu(res.data);
 
       const editState = {};
@@ -50,7 +49,7 @@ const AdminMenu = () => {
 
   const saveItem = async (id) => {
     try {
-      await axios.put(`${API}/${id}`, editing[id]);
+      await axios.put(`${API_BASE}/admin/menu/${id}`, editing[id]);
       fetchMenu();
       setMessage("Changes saved successfully!");
       setTimeout(() => setMessage(""), 3000);
@@ -63,7 +62,7 @@ const AdminMenu = () => {
 
   const deleteItem = async (id) => {
     try {
-      await axios.delete(`${API}/${id}`);
+      await axios.delete(`${API_BASE}/admin/menu/${id}`);
       fetchMenu();
       setMessage("Item deleted successfully!");
       setTimeout(() => setMessage(""), 3000);
@@ -83,7 +82,7 @@ const addItem = async (e) => {
     });
     if (newItem.file) formData.append("image", newItem.file);
 
-    await axios.post(API, formData, {
+    await axios.post(`${API_BASE}/admin/menu`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 

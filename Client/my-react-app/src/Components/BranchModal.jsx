@@ -5,8 +5,7 @@ import { FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 import { useCart } from "../Context/CartContext";
 import CartModal from "./CartModal";
 import getImageUrl from "../utils/getImageUrl";
-
-const API_BASE = "http://localhost:3000/api";
+import { API_BASE } from "../config";
 const PLACEHOLDER = "https://via.placeholder.com/400x300?text=No+Image";
 
 /**

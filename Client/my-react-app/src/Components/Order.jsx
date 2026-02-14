@@ -4,9 +4,8 @@ import { useCart } from "../Context/CartContext";
 import CartModal from "./CartModal";
 import axios from "axios";
 import getImageUrl from "../utils/getImageUrl";
+import { API_BASE } from "../config";
 
-
-const API_BASE = "http://localhost:3000/api";
 const PLACEHOLDER = "https://via.placeholder.com/800x600?text=No+Image";
 
 const MenuSection = () => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-const API_BASE = "http://localhost:3000/api/admin";
+import { API_BASE } from "../config";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -11,7 +10,7 @@ const AdminOrders = () => {
   // Fetch all orders on mount
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/orders`);
+const res = await axios.get(`${API_BASE}/admin/orders`);
       setOrders(res.data);
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -27,9 +26,7 @@ const AdminOrders = () => {
   const markCompleted = async (orderId) => {
     try {
       setLoading(true);
-      const res = await axios.put(`${API_BASE}/orders/${orderId}/status`, {
-        status: "Completed",
-      });
+      const res = await axios.put(`${API_BASE}/admin/orders/${orderId}/status`, { status: "Completed" });
 
       setOrders((prev) =>
         prev.map((o) => (o._id === orderId ? res.data : o))

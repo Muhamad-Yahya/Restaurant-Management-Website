@@ -3,10 +3,10 @@ import React, { useState } from "react";
 import { useCart } from "../Context/CartContext";
 import axios from "axios";
 import getImageUrl from "../utils/getImageUrl";
+import { API_BASE } from "../config";
 
 
 
-const API_BASE = "http://localhost:3000/api";
 
 const CartModal = ({ isOpen, onClose }) => {
   const { cartItems, removeFromCart, clearCart, updateQuantity } = useCart();
