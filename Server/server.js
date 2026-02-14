@@ -19,20 +19,11 @@ const allowedOrigins = [
   "http://localhost:5173", // optional dev
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like curl, Postman)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+
 app.use(express.json());
 
 
