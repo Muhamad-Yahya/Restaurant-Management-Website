@@ -14,8 +14,16 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+// Whitelisted domains (frontend URLs)
+app.use(
+  cors({
+    origin: "*", // ⚠️ allows all domains
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+
 
 // User routes
 app.use("/api/reservations", reservationRoutes);
