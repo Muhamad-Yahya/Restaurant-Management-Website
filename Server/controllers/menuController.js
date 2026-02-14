@@ -110,31 +110,31 @@ export const updateMenuItem = async (req, res) => {
  * Accepts: { name, description, price, category, image, branch, slug }
  * If slug missing it will be generated from branch or name.
  */
+
+
 export const createMenuItem = async (req, res) => {
   try {
-    const { name, description, price, category, image, branch, slug } = req.body;
+    const { name, description, price, category, branch, slug } = req.body;
+    // Use the uploaded file path for the image
+    const image = req.file ? `/menu/${req.file.filename}` : "";
 
-    const finalSlug =
-      slug && String(slug).trim() !== ""
-        ? slugify(slug)
-        : slugify(branch || name);
-
-    const newItem = await MenuItem.create({
+    const item = await MenuItem.create({
       name,
       description,
-      price: Number(price) || 0,
+      price,
       category,
-      image,
       branch,
-      slug: finalSlug,
+      slug,
+      image,
     });
 
-    res.status(201).json(newItem);
+    res.status(201).json(item);
   } catch (err) {
     console.error("Error creating menu item:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Failed to create menu item" });
   }
 };
+
 
 /**
  * ADMIN: DELETE a menu item by ID

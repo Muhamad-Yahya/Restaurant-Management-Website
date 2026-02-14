@@ -7,15 +7,15 @@ const BRANCHES = ["Jade Café", "ChinaTown", "Virasat"];
 const AdminMenu = () => {
   const [menu, setMenu] = useState([]);
   const [editing, setEditing] = useState({});
-  const [newItem, setNewItem] = useState({
-    name: "",
-    description: "",
-    price: 0,
-    category: "",
-    image: "",
-    branch: BRANCHES[0],
-    slug: "",
-  });
+ const [newItem, setNewItem] = useState({
+  name: "",
+  description: "",
+  price: 0,
+  category: "",
+  branch: BRANCHES[0],
+  file: null,
+  filePreview: "",
+});
   const [message, setMessage] = useState("");
 
   const fetchMenu = async () => {
@@ -74,32 +74,28 @@ const AdminMenu = () => {
     }
   };
 
-  const addItem = async (e) => {
-    e.preventDefault();
-    try {
-      // auto-generate slug from name
-      const slug = newItem.name.toLowerCase().replace(/\s+/g, "-");
-      await axios.post(API, { ...newItem, slug });
-      fetchMenu();
-      setMessage("New item added successfully!");
-      setTimeout(() => setMessage(""), 3000);
+const addItem = async (e) => {
+  e.preventDefault();
+  try {
+    const formData = new FormData();
+    Object.keys(newItem).forEach((key) => {
+      if (key !== "file") formData.append(key, newItem[key]);
+    });
+    if (newItem.file) formData.append("image", newItem.file);
 
-      // reset new item form
-      setNewItem({
-        name: "",
-        description: "",
-        price: 0,
-        category: "",
-        image: "",
-        branch: BRANCHES[0],
-        slug: "",
-      });
-    } catch (err) {
-      console.error("Error adding item:", err);
-      setMessage("Failed to add item.");
-      setTimeout(() => setMessage(""), 3000);
-    }
-  };
+    await axios.post(API, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    fetchMenu();
+    setMessage("Item added successfully!");
+    setNewItem({ name: "", description: "", price: 0, category: "", branch: BRANCHES[0], file: null });
+  } catch (err) {
+    console.error(err);
+    setMessage("Failed to add item");
+  }
+};
+
 
   return (
     <div className="bg-white p-4 rounded shadow overflow-x-auto relative">
@@ -160,13 +156,48 @@ const AdminMenu = () => {
           className="border px-2 py-1 rounded flex-1"
           required
         />
-        <input
-          type="text"
-          placeholder="Image URL"
-          value={newItem.image}
-          onChange={(e) => handleNewChange("image", e.target.value)}
-          className="border px-2 py-1 rounded flex-1"
-        />
+   <div className="flex flex-col gap-1">
+  <label className="text-sm font-medium text-gray-700">
+    Menu Image
+  </label>
+
+  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 border border-dashed border-gray-400 rounded hover:bg-gray-200 transition">
+    <span className="text-sm text-gray-700">📁 Choose Image</span>
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setNewItem((prev) => ({
+          ...prev,
+          file,
+          filePreview: URL.createObjectURL(file),
+        }));
+      }}
+    />
+  </label>
+
+  {/* File name */}
+  {newItem.file && (
+    <p className="text-xs text-gray-600 truncate">
+      {newItem.file.name}
+    </p>
+  )}
+
+  {/* Image preview */}
+  {newItem.filePreview && (
+    <img
+      src={newItem.filePreview}
+      alt="Preview"
+      className="mt-2 w-20 h-20 object-cover rounded border"
+    />
+  )}
+</div>
+
+
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
