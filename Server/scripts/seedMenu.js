@@ -2,11 +2,20 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import MenuItem from "../models/MenuItem.js";
+import cloudinary from "../config/cloudinary.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+// For __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: "../.env" });
+
+// Menu data
 const seedData = [
-  // JADE CAFE (8)
+  // JADE CAFE
   { name: "Creamy Alfredo Pastaa", description: "Rich white sauce with mushrooms & chicken", price: 1450, category: "Mains", image: "/menu/dish1.webp", branch: "Jade Café", slug: "jade-cafe" },
   { name: "Grilled Chicken Sandwich", description: "Served with fries & garlic mayo", price: 950, category: "Starters", image: "/menu/dish2.webp", branch: "Jade Café", slug: "jade-cafe" },
   { name: "Classic Club Sandwich", description: "Triple-layered goodness", price: 1100, category: "Mains", image: "/menu/dish3.webp", branch: "Jade Café", slug: "jade-cafe" },
@@ -16,7 +25,7 @@ const seedData = [
   { name: "Chocolate Lava Cake", description: "Warm molten center", price: 750, category: "Desserts", image: "/menu/dish7.webp", branch: "Jade Café", slug: "jade-cafe" },
   { name: "Mint Margarita", description: "Refreshing icy drink", price: 450, category: "Drinks", image: "/menu/dish1.webp", branch: "Jade Café", slug: "jade-cafe" },
 
-  // CHINATOWN (8)
+  // CHINATOWN
   { name: "Szechuan Chicken", description: "Hot, spicy, authentic Chinese flavor", price: 1650, category: "Mains", image: "/menu/dish1.webp", branch: "ChinaTown", slug: "chinatown" },
   { name: "Kung Pao Chicken", description: "Stir-fried with peanuts & dry chillies", price: 1700, category: "Mains", image: "/menu/dish2.webp", branch: "ChinaTown", slug: "chinatown" },
   { name: "Beef Chow Mein", description: "Chinese stir-fried noodles", price: 1550, category: "Mains", image: "/menu/dish3.webp", branch: "ChinaTown", slug: "chinatown" },
@@ -26,7 +35,7 @@ const seedData = [
   { name: "Spring Rolls", description: "Deep-fried Chinese rolls", price: 450, category: "Starters", image: "/menu/dish7.webp", branch: "ChinaTown", slug: "chinatown" },
   { name: "Sweet and Sour Chicken", description: "Fruity, tangy Chinese classic", price: 1600, category: "Mains", image: "/menu/dish1.webp", branch: "ChinaTown", slug: "chinatown" },
 
-  // VIRASAT (8)
+  // VIRASAT
   { name: "Royal Biryani", description: "Authentic Mughlai biryani", price: 1300, category: "Biryani", image: "/menu/dish1.webp", branch: "Virasat", slug: "virasat" },
   { name: "Chicken Karahi", description: "Traditional Pakistani karahi", price: 1800, category: "Karahi", image: "/menu/dish2.webp", branch: "Virasat", slug: "virasat" },
   { name: "Mutton Handi", description: "Creamy Mughlai-style handi", price: 2400, category: "Handi", image: "/menu/dish3.webp", branch: "Virasat", slug: "virasat" },
@@ -42,17 +51,42 @@ const run = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected");
 
+    // Delete old menu items
     await MenuItem.deleteMany({});
     console.log("🗑️ Old menu items deleted");
 
-    await MenuItem.insertMany(seedData);
-    console.log(`🌟 Menu seed completed with ${seedData.length} items!`);
+    for (const item of seedData) {
+      let imageUrl = "";
 
+      // Remove leading slash for proper path
+      const cleanImage = item.image.replace(/^\/+/, ""); // e.g., menu/dish1.webp
+      const localImagePath = path.join(__dirname, "..", "public", cleanImage);
+
+      if (fs.existsSync(localImagePath)) {
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(localImagePath, {
+          folder: "restaurant-menu",
+        });
+        imageUrl = result.secure_url;
+      } else {
+        console.log("⚠️ File not found:", localImagePath);
+      }
+
+      // Save to MongoDB with Cloudinary URL
+      await MenuItem.create({ ...item, image: imageUrl });
+      console.log(`🌟 Seeded: ${item.name}`);
+    }
+
+    console.log("✅ Menu seeding completed with Cloudinary images!");
     process.exit(0);
   } catch (err) {
     console.error("❌ Error seeding menu:", err);
     process.exit(1);
   }
 };
-
+console.log({
+  CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  API_KEY: process.env.CLOUDINARY_API_KEY,
+  API_SECRET: process.env.CLOUDINARY_API_SECRET,
+});
 run();

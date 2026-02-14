@@ -1,4 +1,3 @@
-// controllers/menuController.js
 import MenuItem from "../models/MenuItem.js";
 
 /**
@@ -19,8 +18,6 @@ const slugify = (text) => {
 
 /**
  * PUBLIC: GET menu items
- * Optional query: ?branch=<slug-or-branchName>
- * If branch query is provided, we filter by slug OR branch (case-insensitive for branch).
  */
 export const getAllMenuItems = async (req, res) => {
   try {
@@ -66,57 +63,14 @@ export const adminGetMenuItems = async (req, res) => {
 };
 
 /**
- * ADMIN: UPDATE menu item (price, name, description, category, image, branch, slug)
- *
- * IMPORTANT: this update will NOT overwrite the existing slug UNLESS the client
- * explicitly provides a `slug` field in the request body. That prevents accidental
- * slug changes when admin edits price/name/etc.
+ * ADMIN: CREATE new menu item (Cloudinary-ready)
  */
-export const updateMenuItem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { price, name, description, category, image, branch, slug } = req.body;
-
-    const menuItem = await MenuItem.findById(id);
-    if (!menuItem) return res.status(404).json({ message: "Menu item not found" });
-
-    if (price !== undefined) menuItem.price = Number(price) || 0;
-    if (name !== undefined) menuItem.name = name;
-    if (description !== undefined) menuItem.description = description;
-    if (category !== undefined) menuItem.category = category;
-    if (image !== undefined) menuItem.image = image;
-    if (branch !== undefined) menuItem.branch = branch;
-
-    // ONLY change slug if client explicitly sent `slug`
-    if (slug !== undefined) {
-      if (String(slug).trim() !== "") {
-        menuItem.slug = slugify(slug);
-      } else {
-        const base = branch || name || menuItem.name;
-        if (base) menuItem.slug = slugify(base);
-      }
-    }
-
-    await menuItem.save();
-    res.json(menuItem);
-  } catch (err) {
-    console.error("Error updating menu item:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-/**
- * ADMIN: CREATE new menu item
- * Accepts: { name, description, price, category, image, branch, slug }
- * If slug missing it will be generated from branch or name.
- */
-
-
 export const createMenuItem = async (req, res) => {
   try {
     const { name, description, price, category, branch, slug } = req.body;
-    // Use the uploaded file path for the image
-    const image = req.file ? `/menu/${req.file.filename}` : "";
+
+    // Use Cloudinary URL if image uploaded
+    const image = req.file?.path || "";
 
     const item = await MenuItem.create({
       name,
@@ -135,6 +89,38 @@ export const createMenuItem = async (req, res) => {
   }
 };
 
+/**
+ * ADMIN: UPDATE menu item (Cloudinary-ready)
+ */
+export const updateMenuItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price, name, description, category, branch, slug } = req.body;
+
+    const menuItem = await MenuItem.findById(id);
+    if (!menuItem) return res.status(404).json({ message: "Menu item not found" });
+
+    if (price !== undefined) menuItem.price = Number(price) || 0;
+    if (name !== undefined) menuItem.name = name;
+    if (description !== undefined) menuItem.description = description;
+    if (category !== undefined) menuItem.category = category;
+    if (branch !== undefined) menuItem.branch = branch;
+
+    // Only overwrite slug if explicitly sent
+    if (slug !== undefined) {
+      menuItem.slug = slug.trim() !== "" ? slugify(slug) : slugify(name || menuItem.name);
+    }
+
+    // Replace image if new file uploaded
+    if (req.file) menuItem.image = req.file.path;
+
+    await menuItem.save();
+    res.json(menuItem);
+  } catch (err) {
+    console.error("Error updating menu item:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /**
  * ADMIN: DELETE a menu item by ID
@@ -144,8 +130,7 @@ export const deleteMenuItem = async (req, res) => {
     const { id } = req.params;
 
     const deleted = await MenuItem.findByIdAndDelete(id);
-    if (!deleted)
-      return res.status(404).json({ message: "Menu item not found" });
+    if (!deleted) return res.status(404).json({ message: "Menu item not found" });
 
     res.json({ message: "Menu item deleted successfully" });
   } catch (err) {
