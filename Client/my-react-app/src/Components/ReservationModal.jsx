@@ -1,8 +1,9 @@
 // components/ReservationModal.jsx
 import React, { useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../config";
 
-const API_BASE = "http://localhost:3000/api";
+
 
 const ReservationModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
