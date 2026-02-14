@@ -1,5 +1,5 @@
 import express from "express";
-import Order from "../Models/Order.js";
+import Order from "../models/Order.js";
 import Reservation from "../models/reservation.js";
 import { updateOrderStatus } from "../controllers/orderController.js"; // <-- import this!
 
