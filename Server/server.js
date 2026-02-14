@@ -14,10 +14,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const allowedOrigins = [
-  "https://restaurant-management-website-4iih.vercel.app",
-  "http://localhost:5173", // optional dev
-];
+
 
 app.use(cors({
   origin: true,
